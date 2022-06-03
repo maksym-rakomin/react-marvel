@@ -54,6 +54,10 @@ class CharList extends Component {
         })
     }
 
+    checkActiveClass = (id) => {
+        return id === this.props.selectedChar ? 'char__item_selected' : null
+    }
+
     // Этот метод создан для оптимизации,
     // чтобы не помещать такую конструкцию в метод render
     renderItems(arr) {
@@ -65,9 +69,11 @@ class CharList extends Component {
 
             return (
                 <li
-                    className="char__item"
+                    className={`char__item ${this.checkActiveClass(item.id)}`}
                     key={item.id}
+                    tabIndex="0"
                     onClick={() => this.props.onCharSelected(item.id)}
+                    onFocus={() => this.props.onCharSelected(item.id)}
                 >
                     <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
                     <div className="char__name">{item.name}</div>
