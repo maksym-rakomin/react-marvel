@@ -4,6 +4,7 @@ import './singleComic.scss';
 import useMarvelService from "../../services/MarvelService";
 import Spinner from "../spinner/Spinner";
 import ErrorMessage from "../errorMessage/ErrorMessage";
+import {Helmet} from "react-helmet";
 
 const SingleComic = ({ dataType }) => {
     const { comicsId } = useParams()
@@ -39,6 +40,14 @@ const SingleComic = ({ dataType }) => {
 
     return (
         <>
+            <Helmet>
+                <meta
+                    name="description"
+                    content={comic.description}
+                />
+                <title>{comic.title || comic.name}</title>
+            </Helmet>
+
             {errorMessage}
             {spinner}
             {content}
