@@ -1,10 +1,10 @@
 import SingleComic from "../singleComic/SingleComic";
 
 
-const SingleComicPage = () => {
+const SingleComicPage = props => {
     return (
         <>
-            <SingleComic />
+            <SingleComic {...props} />
         </>
     )
 }
