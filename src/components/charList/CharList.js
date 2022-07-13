@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useMemo, useRef} from 'react';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import useMarvelService from '../../services/MarvelService';
@@ -51,14 +51,18 @@ const CharList = props => {
         setCharEnded(ended)
     }
 
-    const checkActiveClass = (id) => {
-        return id === props.selectedChar ? 'char__item_selected' : null
+    const itemRefs = useRef([]);
+
+    const focusOnItem = (id) => {
+        itemRefs.current.forEach(item => item.classList.remove('char__item_selected'));
+        itemRefs.current[id].classList.add('char__item_selected');
+        itemRefs.current[id].focus();
     }
 
     // Этот метод создан для оптимизации,
     // чтобы не помещать такую конструкцию в метод render
     const renderItems = arr => {
-        const items =  arr.map((item) => {
+        const items =  arr.map((item, i) => {
             let imgStyle = {'objectFit' : 'cover'};
             if (item.thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg') {
                 imgStyle = {'objectFit' : 'unset'};
@@ -66,11 +70,21 @@ const CharList = props => {
 
             return (
                 <li
-                    className={`char__item ${checkActiveClass(item.id)}`}
+                    className="char__item"
                     key={item.id}
                     tabIndex="0"
-                    onClick={() => props.onCharSelected(item.id)}
+                    ref={el => itemRefs.current[i] = el}
                     onFocus={() => props.onCharSelected(item.id)}
+                    onClick={() => {
+                        props.onCharSelected(item.id);
+                        focusOnItem(i);
+                    }}
+                    onKeyPress={(e) => {
+                        if (e.key === ' ' || e.key === "Enter") {
+                            props.onCharSelected(item.id);
+                            focusOnItem(i);
+                        }
+                    }}
                 >
                     <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
                     <div className="char__name">{item.name}</div>
@@ -85,9 +99,14 @@ const CharList = props => {
         )
     }
 
+    const content = useMemo(
+        () => setContent(process, () => renderItems(charList), newItemLoading),
+        [process]
+    )
+
     return (
         <div className="char__list">
-            { setContent(process, () => renderItems(charList), newItemLoading) }
+            { content }
             <button
                 className="button button__main button__long"
                 disabled={newItemLoading}
