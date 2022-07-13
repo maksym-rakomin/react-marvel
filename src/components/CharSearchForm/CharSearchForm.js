@@ -7,23 +7,39 @@ import useMarvelService from '../../services/MarvelService';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 
 import './CharSearchForm.scss';
+import Spinner from "../spinner/Spinner";
+
+const setContent = (process, Component, ErrorComponent = ErrorMessage) => {
+    switch (process) {
+        case 'waiting':
+            return null
+        case 'loading':
+            return <Spinner/>
+        case 'confirmed':
+            return <Component />
+        case 'error':
+            return <ErrorComponent/>
+        default:
+            throw new Error('Unexpected process state')
+    }
+}
 
 const CharSearchForm = () => {
     const [char, setChar] = useState(null);
-    const {loading, error, getCharacterByName, clearError} = useMarvelService();
+    const {getCharacterByName, process, setProcess} = useMarvelService();
 
     const onCharLoaded = (char) => {
         setChar(char);
     }
 
     const updateChar = (name) => {
-        clearError();
-
         getCharacterByName(name)
-            .then(onCharLoaded);
+            .then(onCharLoaded)
+            .then(() => setProcess('confirmed'))
     }
 
-    const errorMessage = error ? <div className="char__search-critical-error"><ErrorMessage /></div> : null;
+    const isLoading = process === 'loading'
+
     const results = !char ? null : char.length > 0 ?
         <div className="char__search-wrapper">
             <div className="char__search-success">There is! Visit {char[0].name} page?</div>
@@ -59,15 +75,15 @@ const CharSearchForm = () => {
                         <button
                             type='submit'
                             className="button button__main"
-                            disabled={loading}>
+                            disabled={isLoading}>
                             <div className="inner">find</div>
                         </button>
                     </div>
                     <FormikErrorMessage component="div" className="char__search-error" name="charName" />
                 </Form>
             </Formik>
-            {results}
-            {errorMessage}
+
+            { setContent(process, () => results, <div className="char__search-critical-error"><ErrorMessage /></div>) }
         </div>
     )
 }

@@ -2,30 +2,31 @@ import { useState, useEffect } from "react";
 import { useParams, Link  } from "react-router-dom";
 import './singleComic.scss';
 import useMarvelService from "../../services/MarvelService";
-import Spinner from "../spinner/Spinner";
-import ErrorMessage from "../errorMessage/ErrorMessage";
 import {Helmet} from "react-helmet";
+import setContent from "../../utils/setContent";
 
 const SingleComic = ({ dataType }) => {
     const { comicsId } = useParams()
     const [comic, setComic] = useState(null)
 
-    const { loading, error, getComic, clearError, getCharacterByName } = useMarvelService();
+    const { getComic, getCharacterByName, process, setProcess } = useMarvelService();
 
     useEffect(() => {
         updateComic()
     }, [comicsId])
 
     const updateComic = () => {
-        clearError()
-
         switch (dataType) {
             case 'comics':
                 getComic(comicsId)
-                    .then(onComicLoaded)
+                    .then(data => onComicLoaded(data))
+                    .then(() => setProcess('confirmed'))
+                break
             case 'characters':
                 getCharacterByName(comicsId)
                     .then(data => onComicLoaded(data[0]))
+                    .then(() => setProcess('confirmed'))
+                break
         }
 
     }
@@ -34,29 +35,23 @@ const SingleComic = ({ dataType }) => {
         setComic(comic)
     }
 
-    const errorMessage = error ? <ErrorMessage/> : null;
-    const spinner = loading ? <Spinner/> : null;
-    const content = !(loading || error || !comic) ? <View comic={comic} dataType={dataType}/> : null;
-
     return (
         <>
             <Helmet>
                 <meta
                     name="description"
-                    content={comic.description}
+                    content={comic?.description || 'description'}
                 />
-                <title>{comic.title || comic.name}</title>
+                <title>{comic?.title || comic?.name}</title>
             </Helmet>
 
-            {errorMessage}
-            {spinner}
-            {content}
+            { setContent(process, View, {comic, dataType}) }
         </>
     )
 }
 
-const View = ({comic, dataType}) => {
-    const {title, name, description, pageCount, thumbnail, language, price} = comic;
+const View = ({data}) => {
+    const {title = '', name = '', description = '', pageCount = '', thumbnail = '', language = '', price = ''} = data.comic;
 
     return (
         <div className="single-comic">
@@ -70,7 +65,7 @@ const View = ({comic, dataType}) => {
                 }
                 <div className="single-comic__price">{price}</div>
             </div>
-            <Link to={`/${dataType}`} className="single-comic__back">Back to all</Link>
+            <Link to={`/${data.dataType}`} className="single-comic__back">Back to all</Link>
         </div>
     )
 }
